@@ -1,10 +1,12 @@
-package org.ilisi.taxifleet.controller;
+package org.ilisi.taxifleet.auth;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ilisi.taxifleet.dto.AuthRequestDTO;
-import org.ilisi.taxifleet.service.AuthenticationService;
+import org.ilisi.taxifleet.auth.dto.AuthRequestDTO;
+import org.ilisi.taxifleet.auth.dto.RegisterUserDto;
+import org.ilisi.taxifleet.auth.service.AuthenticationService;
+import org.ilisi.taxifleet.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +36,22 @@ public class AuthenticationController {
             throw e; // Rethrow the exception for handling in a global exception handler, if configured.
         }
     }
+
+    @PostMapping("/register/{role}")
+    public ResponseEntity<Map<String, Object>> register(@RequestBody @Valid RegisterUserDto user,
+                                                        @PathVariable String role) {
+        if (!role.equalsIgnoreCase("passenger") && !role.equalsIgnoreCase("driver")) {
+            throw new IllegalArgumentException("Role must be either passenger or driver");
+        }
+        User registedUser = authenticationService.registerUser(user, role);
+        log.info("Received registerUser request for username: {}", registedUser.getUsername());
+        return ResponseEntity.ok(Map.of(
+                "message", "User registered successfully",
+                "user", registedUser
+        ));
+
+    }
+
 
     @PostMapping("/refreshToken")
     public ResponseEntity<Map<String, Object>> generateRefreshToken(@RequestBody Map<String, String> request) {

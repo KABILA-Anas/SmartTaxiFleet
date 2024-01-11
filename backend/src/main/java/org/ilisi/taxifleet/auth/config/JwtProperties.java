@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.security;
+package org.ilisi.taxifleet.auth.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

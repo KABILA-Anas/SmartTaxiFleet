@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.service;
+package org.ilisi.taxifleet.auth.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -6,8 +6,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.ilisi.taxifleet.auth.config.JwtProperties;
 import org.ilisi.taxifleet.model.User;
-import org.ilisi.taxifleet.security.JwtProperties;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 

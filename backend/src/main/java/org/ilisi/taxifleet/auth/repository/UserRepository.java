@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.repository;
+package org.ilisi.taxifleet.auth.repository;
 
 import org.ilisi.taxifleet.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,6 +34,7 @@ public interface UserRepository extends JpaRepository<User, String>, UserDetails
     @Override
     default UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format("User with email=%s was not found",
+                        username)));
     }
 }

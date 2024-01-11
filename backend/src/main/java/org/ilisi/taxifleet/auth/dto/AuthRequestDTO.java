@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.dto;
+package org.ilisi.taxifleet.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

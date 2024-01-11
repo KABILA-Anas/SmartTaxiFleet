@@ -1,17 +1,21 @@
-package org.ilisi.taxifleet.service;
+package org.ilisi.taxifleet.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ilisi.taxifleet.dto.AuthRequestDTO;
-import org.ilisi.taxifleet.exception.AuthenticationFailedException;
-import org.ilisi.taxifleet.exception.InvalidTokenException;
+import org.ilisi.taxifleet.auth.dto.AuthRequestDTO;
+import org.ilisi.taxifleet.auth.dto.RegisterUserDto;
+import org.ilisi.taxifleet.auth.exception.AuthenticationFailedException;
+import org.ilisi.taxifleet.auth.exception.InvalidTokenException;
+import org.ilisi.taxifleet.auth.repository.SessionRepository;
+import org.ilisi.taxifleet.auth.repository.UserRepository;
+import org.ilisi.taxifleet.model.Driver;
+import org.ilisi.taxifleet.model.Passenger;
 import org.ilisi.taxifleet.model.Session;
 import org.ilisi.taxifleet.model.User;
-import org.ilisi.taxifleet.repository.SessionRepository;
-import org.ilisi.taxifleet.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,6 +30,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final SessionRepository sessionRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public Map<String, Object> authenticate(AuthRequestDTO appUser) {
         User user = (User) userRepository.loadUserByUsername(appUser.getUsername());
@@ -73,4 +78,16 @@ public class AuthenticationService {
         throw new InvalidTokenException("login again, session not valid !", "REFRESH_TOKEN_SESSION_NOT_VALID");
     }
 
+    public User registerUser(RegisterUserDto user, String role) {
+        User userEntity = role.equals("passenger") ? new Passenger() : new Driver();
+
+        userEntity.setEmail(user.email());
+        userEntity.setCin(user.cin());
+        userEntity.setFirstName(user.firstName());
+        userEntity.setLastName(user.lastName());
+        userEntity.setPassword(passwordEncoder.encode(user.password()));
+        userEntity.setPhone(user.phone());
+        userEntity.setEnabled(true);
+        return userRepository.save(userEntity);
+    }
 }

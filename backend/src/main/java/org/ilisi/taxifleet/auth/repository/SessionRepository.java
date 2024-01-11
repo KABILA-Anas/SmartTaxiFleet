@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.repository;
+package org.ilisi.taxifleet.auth.repository;
 
 import org.ilisi.taxifleet.model.Session;
 import org.springframework.data.jpa.repository.JpaRepository;

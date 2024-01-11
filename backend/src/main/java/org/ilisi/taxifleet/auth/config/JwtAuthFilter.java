@@ -1,13 +1,13 @@
-package org.ilisi.taxifleet.security;
+package org.ilisi.taxifleet.auth.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.ilisi.taxifleet.exception.InvalidTokenException;
-import org.ilisi.taxifleet.repository.UserRepository;
-import org.ilisi.taxifleet.service.JwtService;
+import org.ilisi.taxifleet.auth.exception.InvalidTokenException;
+import org.ilisi.taxifleet.auth.repository.UserRepository;
+import org.ilisi.taxifleet.auth.service.JwtService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

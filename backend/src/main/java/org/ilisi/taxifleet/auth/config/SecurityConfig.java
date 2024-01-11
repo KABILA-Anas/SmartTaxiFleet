@@ -1,7 +1,8 @@
-package org.ilisi.taxifleet.security;
+package org.ilisi.taxifleet.auth.config;
 
 import lombok.RequiredArgsConstructor;
-import org.ilisi.backend.repository.UserRepository;
+import org.ilisi.taxifleet.auth.repository.UserRepository;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +28,7 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
