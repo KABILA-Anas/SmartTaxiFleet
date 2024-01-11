@@ -3,11 +3,13 @@ import {Alert, Button, Pressable, SafeAreaView, StyleSheet, Switch, Text, TextIn
 
 import {COLORS} from '../constants/theme'
 import {useRouter} from "expo-router";
+import InputComponent from '../components/InputComponent';
+import SubmitButtonComponent from '../components/SubmitButtonComponent';
 
 export default function LoginForm() {
     const [click, setClick] = useState(false);
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("username");
+    const [password, setPassword] = useState("password");
     const router = useRouter()
 
     return (
@@ -15,12 +17,19 @@ export default function LoginForm() {
 
             <Text style={styles.title}>Sign In</Text>
             <View style={styles.inputView}>
-                <TextInput style={styles.input} placeholder='EMAIL OR USERNAME' value={username}
-                           onChangeText={setUsername} autoCorrect={false}
-                           autoCapitalize='none'/>
-                <TextInput style={styles.input} placeholder='PASSWORD' secureTextEntry value={password}
-                           onChangeText={setPassword} autoCorrect={false}
-                           autoCapitalize='none'/>
+                <InputComponent 
+                    value={username} 
+                    onChange={setUsername} 
+                    placeholder="Email" 
+                    inputStyle={styles.input}
+                />
+                <InputComponent 
+                    value={password} 
+                    onChange={setPassword} 
+                    placeholder="Password" 
+                    type="password" 
+                    inputStyle={styles.input}
+                />
             </View>
             <View style={styles.rememberView}>
                 <View style={styles.switch}>
@@ -34,18 +43,18 @@ export default function LoginForm() {
                 </View>
             </View>
 
-            <View style={styles.buttonView}>
-                <Pressable style={styles.button} onPress={() => Alert.alert("Login Successfuly!",
-                    "see you in my instagram if you have questions : must_ait6")}>
-                    <Text style={styles.buttonText}>Sign In</Text>
-                </Pressable>
-                <Text style={styles.optionsText}>OR LOGIN WITH</Text>
-            </View>
-
+            <SubmitButtonComponent
+                text="Sign In"
+                onPress={() => Alert.alert(`username: ${username} password: ${password}`)}
+                viewStyle={styles.buttonView}
+                pressableStyle={styles.button}
+                textStyle={styles.buttonText}
+            />
+            <Text style={styles.optionsText}>OR LOGIN WITH</Text>
             <Text style={styles.footerText}>
                 Don't Have Account?
                 <Text style={styles.signup} onPress={
-                    () => router.push("/signup" as never)
+                    () => router.push("/signup")
                 }>Sign Up</Text>
             </Text>
 

@@ -4,10 +4,12 @@ import {Alert, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View} from 
 import {COLORS} from '../constants/theme'
 import {useRouter} from "expo-router";
 
+import InputComponent from '../components/InputComponent';
+import SubmitButtonComponent from '../components/SubmitButtonComponent';
+
 export default function SignupForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [email, setEmail] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const router = useRouter()
     return (
@@ -15,31 +17,40 @@ export default function SignupForm() {
 
             <Text style={styles.title}>Sign Up</Text>
             <View style={styles.inputView}>
-                <TextInput style={styles.input} placeholder='EMAIL' value={email} onChangeText={setEmail}
-                           autoCorrect={false}
-                           autoCapitalize='none'/>
-                <TextInput style={styles.input} placeholder='USERNAME' value={username} onChangeText={setUsername}
-                           autoCorrect={false}
-                           autoCapitalize='none'/>
-                <TextInput style={styles.input} placeholder='PASSWORD' secureTextEntry value={password}
-                           onChangeText={setPassword} autoCorrect={false}
-                           autoCapitalize='none'/>
-                <TextInput style={styles.input} placeholder='CONFIRM PASSWORD' secureTextEntry value={confirmPassword}
-                           onChangeText={setConfirmPassword} autoCorrect={false}
-                           autoCapitalize='none'/>
+                <InputComponent 
+                        value={username} 
+                        onChange={setUsername} 
+                        placeholder="EMAIL" 
+                        inputStyle={styles.input}
+                />
+                <InputComponent 
+                    value={password} 
+                    onChange={setPassword} 
+                    placeholder="PASSWORD" 
+                    type="password" 
+                    inputStyle={styles.input}
+                />
+                <InputComponent 
+                    value={confirmPassword} 
+                    onChange={setConfirmPassword} 
+                    placeholder="CONFIRM PASSWORD" 
+                    type="password" 
+                    inputStyle={styles.input}
+                />
             </View>
 
-            <View style={styles.buttonView}>
-                <Pressable style={styles.button} onPress={() => Alert.alert("Signup Successfuly!",
-                    "see you in my instagram if you have questions : must_ait6")}>
-                    <Text style={styles.buttonText}>Sign Up</Text>
-                </Pressable>
-            </View>
+            <SubmitButtonComponent
+                text="Sign Up"
+                onPress={() => Alert.alert(`username: ${username} password: ${password} confirmPassword: ${confirmPassword}`)}
+                viewStyle={styles.buttonView}
+                pressableStyle={styles.button}
+                textStyle={styles.buttonText}
+            />
 
             <Text style={styles.footerText}>
                 Already Have Account?
                 <Text style={styles.signup} onPress={
-                    () => router.push("/signin" as never)
+                    () => router.push("/signin")
                 }>
                     Sign In
                 </Text>
