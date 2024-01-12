@@ -35,6 +35,9 @@ frontend/.env*.local
 # typescript
 frontend/*.tsbuildinfo
 
+# expo
+frontend/.expo/
+
 # intellij
 .idea/
 
