@@ -1,43 +1,56 @@
 import {Alert} from "react-native";
+import {API_BASE_URL} from "../constants/api";
 
-const baseURL = 'http://localhost:8080';
 export default class AuthService {
 
-    static register(user,role) {
-        fetch(`${baseURL}/auth/register/${role}`, {
+    static register(user, role) {
+
+        fetch(`${API_BASE_URL}/auth/register/${role}`, {
             method: 'POST',
             body: JSON.stringify(user),
             headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(res => {
-            Alert.alert("Success", res.json());
-        }).catch(err => {
-            Alert.alert("Error", "Something went wrong");
+                'Content-Type': 'application/json',
+            },
         })
+            .then(res => res.json())
+            .then(data => {
+                Alert.alert("Success", JSON.stringify(data));
+                console.log("register", data);
+            })
+            .catch(err => {
+                console.error("register_ERROR :", err);
+                // Alert.alert("Error", "Something went wrong");
+            });
     }
 
     static login(user) {
-        fetch(`${baseURL}/auth/login`, {
+        fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             body: JSON.stringify(user),
             headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(res => {
-            Alert.alert("Success", res.json());
-        }).catch(err => {
-            Alert.alert("Error", err.toString());
+                'Content-Type': 'application/json',
+            },
         })
+            .then(res => res.json())
+            .then(data => {
+                Alert.alert("Success", JSON.stringify(data));
+            })
+            .catch(err => {
+                console.error("login_ERROR :", err);
+                Alert.alert("Error", err.toString());
+            });
     }
 
     static logout() {
-        fetch(`${baseURL}/auth/logout`, {
-            method: 'GET'
-        }).then(res => {
-            Alert.alert("Success", res.json());
-        }).catch(err => {
-            Alert.alert("Error", "Something went wrong");
+        fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'GET',
         })
+            .then(res => res.json())
+            .then(data => {
+                Alert.alert("Success", JSON.stringify(data));
+            })
+            .catch(err => {
+                Alert.alert("Error", "Something went wrong");
+            });
     }
 }
