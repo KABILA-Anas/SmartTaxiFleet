@@ -2,8 +2,12 @@ services:
   postgres:
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=smart-taxi--fleet-db'
+      - 'POSTGRES_PASSWORD=S3cr3t'
+      - 'POSTGRES_USER=postgres'
     ports:
       - '5432'
+    volumes:
+      - 'postgres:/var/lib/postgresql'
+volumes:
+  postgres:

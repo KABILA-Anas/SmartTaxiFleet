@@ -1,16 +1,26 @@
 import React, {useState} from 'react'
-import {Alert, Button, Pressable, SafeAreaView, StyleSheet, Switch, Text, TextInput, View} from 'react-native'
+import {Alert, Pressable, SafeAreaView, StyleSheet, Switch, Text, View} from 'react-native'
 
 import {COLORS} from '../constants/theme'
 import {useRouter} from "expo-router";
 import InputComponent from '../components/InputComponent';
 import SubmitButtonComponent from '../components/SubmitButtonComponent';
+import AuthService from "../services/AuthService";
 
 export default function LoginForm() {
     const [click, setClick] = useState(false);
-    const [username, setUsername] = useState("username");
-    const [password, setPassword] = useState("password");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
     const router = useRouter()
+
+    const handleLogin = () => {
+        const user = {
+            'username': username,
+            'password': password,
+        };
+        AuthService.login(user);
+    }
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -45,7 +55,7 @@ export default function LoginForm() {
 
             <SubmitButtonComponent
                 text="Sign In"
-                onPress={() => Alert.alert(`username: ${username} password: ${password}`)}
+                onPress={handleLogin}
                 viewStyle={styles.buttonView}
                 pressableStyle={styles.button}
                 textStyle={styles.buttonText}

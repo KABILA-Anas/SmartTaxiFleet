@@ -1,17 +1,33 @@
 import React, {useState} from 'react'
-import {Alert, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View} from 'react-native'
+import {Alert, SafeAreaView, StyleSheet, Text, View} from 'react-native'
 
 import {COLORS} from '../constants/theme'
 import {useRouter} from "expo-router";
 
 import InputComponent from '../components/InputComponent';
 import SubmitButtonComponent from '../components/SubmitButtonComponent';
+import AuthService from "../services/AuthService";
 
 export default function SignupForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const router = useRouter()
+
+    const handleRegister = () => {
+        const user = {
+            'email': username,
+            'password': password,
+            'firstName': 'John',
+            'lastName': 'Doe',
+            'phone': '1234567890',
+            'cin': 'BB123456',
+
+        };
+        Alert.alert(JSON.stringify(user));
+        AuthService.register(user,'passenger');
+    }
+
     return (
         <SafeAreaView style={styles.container}>
 
@@ -41,7 +57,7 @@ export default function SignupForm() {
 
             <SubmitButtonComponent
                 text="Sign Up"
-                onPress={() => Alert.alert(`username: ${username} password: ${password} confirmPassword: ${confirmPassword}`)}
+                onPress={handleRegister}
                 viewStyle={styles.buttonView}
                 pressableStyle={styles.button}
                 textStyle={styles.buttonText}
