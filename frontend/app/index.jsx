@@ -1,8 +1,8 @@
-import LoginForm from "./signin";
+import HomePage from "./home";
 
 export default function App() {
   return (
-    <LoginForm />
+    <HomePage />
   );
 }
 
