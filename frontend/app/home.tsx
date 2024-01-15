@@ -3,6 +3,7 @@ import MapView, {PROVIDER_DEFAULT, Region, Marker, Callout, Polyline} from "reac
 import { StyleSheet, View, Text } from 'react-native';
 import * as Location from 'expo-location';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import MapViewDirections from 'react-native-maps-directions';
 
 
 export default function HomePage() {
@@ -86,7 +87,7 @@ export default function HomePage() {
                 
             </MapView>
 
-            <View>
+            <View style={{position: 'absolute', bottom: 20, left: 20, right: 0, alignItems: 'center'}}>
                 <TouchableOpacity style={styles.navigateButton}>
                     <Text style={styles.buttonText}>Choose Destination</Text>
                 </TouchableOpacity>
@@ -106,9 +107,6 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     navigateButton: {
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
         backgroundColor: 'blue',
         padding: 10,
         borderRadius: 5,
