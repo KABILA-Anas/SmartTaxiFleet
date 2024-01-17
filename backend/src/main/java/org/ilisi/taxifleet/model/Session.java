@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -21,7 +23,13 @@ public class Session {
     @Column(unique = true, nullable = false, length = 512)
     private String token;
     @Column(nullable = false, updatable = false)
+    @CreationTimestamp
     private Instant createdAt;
+
+    @Column(nullable = false, updatable = false)
+    @UpdateTimestamp
+    private Instant lastUpdatedAt;
+
     private Instant lastRefreshedAt;
     @Column(nullable = false, updatable = false)
     private Instant expiresAt;
