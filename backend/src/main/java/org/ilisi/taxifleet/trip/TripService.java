@@ -40,7 +40,7 @@ public class TripService {
         Trip tripToCreate = Trip.builder()
                 .passenger(passenger)
                 .departureLatitude(trip.pickupLatitude())
-                .departureLongitude(trip.destinationLongitude())
+                .departureLongitude(trip.pickupLongitude())
                 .destinationLatitude(trip.destinationLatitude())
                 .destinationLongitude(trip.destinationLongitude())
                 .status(TripStatus.PENDING)
