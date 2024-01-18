@@ -1,6 +1,7 @@
 package org.ilisi.taxifleet.trip;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ilisi.taxifleet.model.Driver;
 import org.ilisi.taxifleet.model.Passenger;
 import org.ilisi.taxifleet.model.User;
@@ -12,15 +13,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class TripService {
 
     private final TripRepository tripRepository;
-
 
     public List<Trip> getTripNearbyPassengersTrips(Double latitude, Double longitude, Double minDistance) {
         if (minDistance == null) {
@@ -70,7 +72,7 @@ public class TripService {
         if (trip.isPresent()) {
             Trip tripToFinish = trip.get();
             //check if the user is the driver or the passenger of the trip
-            if (tripToFinish.getDriver().equals(user) || tripToFinish.getPassenger().equals(user)) {
+            if (Objects.equals(tripToFinish.getDriver(), user) || Objects.equals(tripToFinish.getPassenger(), user)) {
                 tripToFinish.setStatus(TripStatus.FINISHED);
                 return tripRepository.save(tripToFinish);
             }
@@ -84,12 +86,12 @@ public class TripService {
         if (trip.isPresent()) {
             Trip tripToCancel = trip.get();
             //check if the user is the driver or the passenger of the trip
-            if (tripToCancel.getDriver().equals(user)) {
+            if (Objects.equals(tripToCancel.getDriver(), user)) {
                 tripToCancel.setStatus(TripStatus.CANCELED);
                 tripToCancel.setDriver(null);
                 return tripRepository.save(tripToCancel);
             }
-            if (tripToCancel.getPassenger().equals(user)) {
+            if (Objects.equals(tripToCancel.getPassenger(), user)) {
                 tripToCancel.setStatus(TripStatus.CANCELED);
                 tripToCancel.setPassenger(null);
                 return tripRepository.save(tripToCancel);
@@ -97,5 +99,16 @@ public class TripService {
             throw new NotAllowedToChangeTripException("You are not allowed to cancel this trip");
         }
         throw new TripNotFoundException("Trip not found");
+    }
+
+    public Trip getPassengerTripInProgress(Passenger passenger) {
+        List<Trip> trips = tripRepository.findByPassengerTipsInProgress(passenger.getId());
+        if (trips.isEmpty()) {
+            throw new TripNotFoundException("you have no trip in progress");
+        }
+        if (trips.size() > 1) {
+            log.error("Passenger {} has more than one trip in progress : {}", passenger.getId(), trips);
+        }
+        return trips.get(0);
     }
 }

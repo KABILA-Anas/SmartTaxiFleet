@@ -30,6 +30,13 @@ public class TripController {
         return ResponseEntity.ok(trips);
     }
 
+    @GetMapping("/trips/in-progress")
+    @PreAuthorize("hasRole('ROLE_PASSENGER')")
+    public ResponseEntity<Trip> getPassengerTripsInProgress(Principal principal) {
+        Passenger passenger = ((Passenger) ((Authentication) principal).getPrincipal());
+        var trip = tripService.getPassengerTripInProgress(passenger);
+        return ResponseEntity.ok(trip);
+    }
 
     @PostMapping("/trips/request")
     @PreAuthorize("hasRole('ROLE_PASSENGER')")
