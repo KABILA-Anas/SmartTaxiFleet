@@ -1,13 +1,40 @@
+version: '3'
 services:
-  postgres:
-    image: 'postgres:latest'
+  # PostgreSQL with PostGIS
+  db:
+    #image: postgis/postgis:16-3.4
+    image: kartoza/postgis:13.0
+    container_name: postgres-postgis
     environment:
-      - 'POSTGRES_DB=smart-taxi--fleet-db'
-      - 'POSTGRES_PASSWORD=S3cr3t'
-      - 'POSTGRES_USER=postgres'
+      - 'POSTGRES_DB=TalabaDB'
+      - 'POSTGRES_USER=ilisi'
+      - 'POSTGRES_PASSWORD=ilisi'
     ports:
-      - '5432'
+      - "5432"
+    networks:
+      - pg-network
     volumes:
-      - 'postgres:/var/lib/postgresql'
+      - pg-data:/var/lib/postgresql/data
+
+  # PGAdmin4
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ilisi@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: ilisi
+    ports:
+      - "15050:80"
+    depends_on:
+      - db
+    networks:
+      - pg-network
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin4/ilisi@gmail.com
+
+networks:
+  pg-network:
+
 volumes:
-  postgres:
+  pgadmin-data:
+  pg-data:
