@@ -10,7 +10,7 @@ services:
       - 'POSTGRES_USER=ilisi'
       - 'POSTGRES_PASSWORD=ilisi'
     ports:
-      - "5432"
+      - "5432:5432"
     networks:
       - pg-network
     volumes:
