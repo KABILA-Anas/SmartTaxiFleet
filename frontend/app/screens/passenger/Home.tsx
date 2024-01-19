@@ -18,6 +18,7 @@ export default function HomePage() {
     const [trip, setTrip] = useState(false);
     const [driverLocation, setDriverLocation] = useState({latitude: 0, longitude: 0});
     const [loading, setLoading] = useState(false);
+    const mapRef = React.useRef<MapView>(null);
 
     const handlePress = (e: any) => {
         if (startTrip) {
@@ -54,6 +55,13 @@ export default function HomePage() {
                     setDriverLocation({ latitude: 33.71774591127574, longitude: -7.35055675730109 });
                     setLoading(false);
                 }, 3000);
+
+                mapRef.current?.animateToRegion({
+                    latitude: location?.coords.latitude || 37.78825,
+                    longitude: location?.coords.longitude || -122.4324,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                }, 1000);
               } }
             ]
           );
@@ -74,6 +82,12 @@ export default function HomePage() {
                 setdestination({latitude: 0, longitude: 0});
                 setDriverLocation({latitude: 0, longitude: 0});
               
+                mapRef.current?.animateToRegion({
+                    latitude: location?.coords.latitude || 37.78825,
+                    longitude: location?.coords.longitude || -122.4324,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                }, 1000);
               } }
             ]
           );
@@ -96,14 +110,17 @@ export default function HomePage() {
             return;
             }
 
-            let location = await Location.getCurrentPositionAsync({});
-            setLocation(location);
+            setInterval(async () => {
+                let location = await Location.getCurrentPositionAsync({});
+                setLocation(location);
+            }, 10000);
         })();
     }, []);
 
     return (
         <View style={styles.container}>
             <MapView
+                ref={mapRef}
                 zoomControlEnabled={true}
                 scrollEnabled={true}
                 scrollDuringRotateOrZoomEnabled={false}

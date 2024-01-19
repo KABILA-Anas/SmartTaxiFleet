@@ -1,4 +1,4 @@
-import HomePage from "./screens/passenger/Home";
+import HomePage from "./screens/driver/Home";
 
 export default function App() {
   return (

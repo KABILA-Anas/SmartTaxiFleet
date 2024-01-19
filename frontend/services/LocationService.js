@@ -1,5 +1,4 @@
 import {API_BASE_URL} from "../constants/api";
-
 export default class LocationService {
     static sendLocation(location) {
         fetch(`${API_BASE_URL}/userLocation`, {
