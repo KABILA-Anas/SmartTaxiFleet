@@ -18,7 +18,14 @@ export default function LoginForm() {
             'username': username,
             'password': password,
         };
-        AuthService.login(user);
+        AuthService.login(user)
+        .then(() => {
+            router.push("/home")
+        })
+        .catch((error) => {
+            console.log(error);
+            Alert.alert("Login Failed!");
+        });
     }
 
 

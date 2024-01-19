@@ -25,7 +25,14 @@ export default function SignupForm() {
 
         };
         Alert.alert(JSON.stringify(user));
-        AuthService.register(user,'passenger');
+        AuthService.register(user,'passenger')
+        .then(() => {
+            router.push("/signin")
+        })
+        .catch((error) => {
+            console.log(error);
+            Alert.alert("Register Failed!");
+        });
     }
 
     return (

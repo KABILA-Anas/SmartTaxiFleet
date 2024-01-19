@@ -5,7 +5,7 @@ export default class AuthService {
 
     static register(user, role) {
 
-        fetch(`${API_BASE_URL}/auth/register/${role}`, {
+        return fetch(`${API_BASE_URL}/auth/register/${role}`, {
             method: 'POST',
             body: JSON.stringify(user),
             headers: {
@@ -16,15 +16,11 @@ export default class AuthService {
             .then(data => {
                 Alert.alert("Success", JSON.stringify(data));
                 console.log("register", data);
-            })
-            .catch(err => {
-                console.error("register_ERROR :", err);
-                // Alert.alert("Error", "Something went wrong");
             });
     }
 
     static login(user) {
-        fetch(`${API_BASE_URL}/auth/login`, {
+        return fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             body: JSON.stringify(user),
             headers: {
@@ -35,10 +31,6 @@ export default class AuthService {
             .then(data => {
                 Alert.alert("Success", JSON.stringify(data));
             })
-            .catch(err => {
-                console.error("login_ERROR :", err);
-                Alert.alert("Error", err.toString());
-            });
     }
 
     static logout() {
