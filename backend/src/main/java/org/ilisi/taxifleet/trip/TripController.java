@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.ilisi.taxifleet.model.Driver;
 import org.ilisi.taxifleet.model.Passenger;
 import org.ilisi.taxifleet.model.User;
+import org.ilisi.taxifleet.trip.dto.TripInProgressDto;
+import org.ilisi.taxifleet.trip.dto.TripRequestDto;
 import org.ilisi.taxifleet.trip.model.Trip;
 import org.ilisi.taxifleet.userlocation.UserLocationService;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +60,19 @@ public class TripController {
     public ResponseEntity<TripInProgressDto> acceptTrip(@PathVariable("tripId") Long tripId, Principal principal) {
         Driver driver = ((Driver) ((Authentication) principal).getPrincipal());
         Trip trip = tripService.acceptTrip(tripId, driver);
+        var passengerLocation = userLocationService.getUserLocation(trip.getPassenger());
+        return ResponseEntity.ok(TripInProgressDto
+                .builder()
+                .trip(trip)
+                .userLocation(passengerLocation)
+                .build());
+    }
+
+    @GetMapping("/trip/auto/accept")
+    @PreAuthorize("hasRole('ROLE_DRIVER')")
+    public ResponseEntity<TripInProgressDto> acceptTrip(Principal principal) {
+        Driver driver = ((Driver) ((Authentication) principal).getPrincipal());
+        Trip trip = tripService.autoAcceptTrip(driver);
         var passengerLocation = userLocationService.getUserLocation(trip.getPassenger());
         return ResponseEntity.ok(TripInProgressDto
                 .builder()
