@@ -41,8 +41,10 @@ public class AuthenticationService {
         if (!authentication.isAuthenticated()) {
             throw new AuthenticationFailedException("username or password is incorrect !", "INVALID_CREDENTIALS");
         }
-        // save refresh token
+        // generate tokens
+        String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+        // save refresh token
         Session sessionEntity = new Session();
         sessionEntity.setToken(refreshToken);
         sessionEntity.setUser(user);
@@ -52,8 +54,9 @@ public class AuthenticationService {
         log.info("saving refresh token : {}", sessionRepository.save(sessionEntity).getToken());
         // return tokens
         return Map.of(
-                "accessToken", jwtService.generateAccessToken(user),
-                "refreshToken", refreshToken
+                "accessToken", accessToken,
+                "refreshToken", refreshToken,
+                "user", user
         );
     }
 
