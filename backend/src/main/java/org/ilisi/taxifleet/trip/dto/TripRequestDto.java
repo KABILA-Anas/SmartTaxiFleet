@@ -1,4 +1,4 @@
-package org.ilisi.taxifleet.trip;
+package org.ilisi.taxifleet.trip.dto;
 
 import lombok.Builder;
 
