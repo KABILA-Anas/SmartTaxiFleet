@@ -67,12 +67,12 @@ public class TripService {
         }
     }
 
-    public Trip finishTrip(Long tripId, User user) {
+    public Trip finishTrip(Long tripId, Passenger passenger) {
         Optional<Trip> trip = tripRepository.findById(tripId);
         if (trip.isPresent()) {
             Trip tripToFinish = trip.get();
             //check if the user is the driver or the passenger of the trip
-            if (Objects.equals(tripToFinish.getDriver(), user) || Objects.equals(tripToFinish.getPassenger(), user)) {
+            if (Objects.equals(tripToFinish.getPassenger(), passenger)) {
                 tripToFinish.setStatus(TripStatus.FINISHED);
                 return tripRepository.save(tripToFinish);
             }

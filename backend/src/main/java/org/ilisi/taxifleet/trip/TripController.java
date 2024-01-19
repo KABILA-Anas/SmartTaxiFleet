@@ -5,6 +5,7 @@ import org.ilisi.taxifleet.model.Driver;
 import org.ilisi.taxifleet.model.Passenger;
 import org.ilisi.taxifleet.model.User;
 import org.ilisi.taxifleet.trip.model.Trip;
+import org.ilisi.taxifleet.userlocation.UserLocationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import java.util.List;
 public class TripController {
 
     private final TripService tripService;
+    private final UserLocationService userLocationService;
 
     @GetMapping("/trips/nearby")
     @PreAuthorize("hasRole('ROLE_DRIVER')")
@@ -32,10 +34,15 @@ public class TripController {
 
     @GetMapping("/trips/in-progress")
     @PreAuthorize("hasRole('ROLE_PASSENGER')")
-    public ResponseEntity<Trip> getPassengerTripsInProgress(Principal principal) {
+    public ResponseEntity<TripInProgressDto> getPassengerTripsInProgress(Principal principal) {
         Passenger passenger = ((Passenger) ((Authentication) principal).getPrincipal());
         var trip = tripService.getPassengerTripInProgress(passenger);
-        return ResponseEntity.ok(trip);
+        var driverLocation = userLocationService.getUserLocation(trip.getDriver());
+        return ResponseEntity.ok(TripInProgressDto
+                .builder()
+                .trip(trip)
+                .userLocation(driverLocation)
+                .build());
     }
 
     @PostMapping("/trips/request")
@@ -48,17 +55,22 @@ public class TripController {
 
     @GetMapping("/trip/{tripId}/accept")
     @PreAuthorize("hasRole('ROLE_DRIVER')")
-    public ResponseEntity<Trip> acceptTrip(@PathVariable("tripId") Long tripId, Principal principal) {
+    public ResponseEntity<TripInProgressDto> acceptTrip(@PathVariable("tripId") Long tripId, Principal principal) {
         Driver driver = ((Driver) ((Authentication) principal).getPrincipal());
         Trip trip = tripService.acceptTrip(tripId, driver);
-        return ResponseEntity.ok(trip);
+        var passengerLocation = userLocationService.getUserLocation(trip.getPassenger());
+        return ResponseEntity.ok(TripInProgressDto
+                .builder()
+                .trip(trip)
+                .userLocation(passengerLocation)
+                .build());
     }
 
     @GetMapping("/trip/{tripId}/finish")
-    @PreAuthorize("hasRole('ROLE_DRIVER') or hasRole('ROLE_PASSENGER')")
+    @PreAuthorize("hasRole('ROLE_PASSENGER')")
     public ResponseEntity<Trip> finishTrip(@PathVariable("tripId") Long tripId, Principal principal) {
-        User user = ((User) ((Authentication) principal).getPrincipal());
-        Trip trip = tripService.finishTrip(tripId, user);
+        Passenger passenger = ((Passenger) ((Authentication) principal).getPrincipal());
+        Trip trip = tripService.finishTrip(tripId, passenger);
         return ResponseEntity.ok(trip);
     }
 
