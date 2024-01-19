@@ -1,18 +1,19 @@
 jwt:
   key: "YourSecretKeyHereYourSecretKeyHereYourSecretKeyHereYourSecretKeyHere"
-  access-token-expiration-in-minutes: 10000000
+  access-token-expiration-in-minutes: 10000
   refresh-token-expiration-in-days: 30
+
 spring:
   docker:
     compose:
-      file: backend/compose.yaml
+      skip:
+        in-tests: false
+      enabled: true
 
   datasource:
     url: jdbc:postgresql://localhost:5432/TalabaDB
     username: ilisi
     password: ilisi
-
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true

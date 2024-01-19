@@ -1,6 +1,8 @@
 package org.ilisi.taxifleet.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.ilisi.taxifleet.trip.exception.NotAllowedToChangeTripException;
+import org.ilisi.taxifleet.trip.exception.TripNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExceptionHandlersController {
 
+    @ExceptionHandler(TripNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTripNotFoundException(TripNotFoundException e) {
+        Map<String, Object> body = Map.of("message", e.getMessage());
+        log.error("Trip not found", e);
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(NotAllowedToChangeTripException.class)
+    public ResponseEntity<Map<String, Object>> handleNotAllowedToChangeTripException(NotAllowedToChangeTripException e) {
+        Map<String, Object> body = Map.of("message", e.getMessage());
+        log.error("Not allowed to change trip", e);
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(AuthenticationException e) {

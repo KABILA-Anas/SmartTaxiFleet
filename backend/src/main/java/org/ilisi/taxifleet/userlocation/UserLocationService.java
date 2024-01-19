@@ -2,6 +2,7 @@ package org.ilisi.taxifleet.userlocation;
 
 import lombok.RequiredArgsConstructor;
 import org.ilisi.taxifleet.model.User;
+import org.ilisi.taxifleet.userlocation.exception.UserLocationNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,12 @@ public class UserLocationService {
                         .user(user)
                         .connected(false)
                         .build())
+        );
+    }
+
+    public UserLocation getUserLocation(User user) {
+        return userLocationRepository.findByUser(user).orElseThrow(
+                () -> new UserLocationNotFoundException(String.format("User location not found for user: %s", user.getUsername()))
         );
     }
 }

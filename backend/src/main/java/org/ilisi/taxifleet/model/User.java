@@ -21,9 +21,9 @@ import java.util.Collection;
 @AllArgsConstructor
 public abstract class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(updatable = false, nullable = false)
-    private String id;
+    private Long id;
 
     @Column(unique = true)
     private String email;

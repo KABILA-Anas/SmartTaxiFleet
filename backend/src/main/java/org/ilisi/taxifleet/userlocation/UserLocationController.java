@@ -25,9 +25,8 @@ public class UserLocationController {
     private final UserLocationService userLocationService;
 
     @PostMapping("/")
-    public ResponseEntity<UserLocation> handleUserLocation(@RequestBody UserLocationDto userLocationDto,
+    public ResponseEntity<UserLocation> postUserLocation(@RequestBody UserLocationDto userLocationDto,
                                                            Principal principal) {
-
         User user = ((User) ((Authentication) principal).getPrincipal());
         // Handle the received user location message
         log.info("Received user location message: {} from user: {}", userLocationDto, user.getUsername());
@@ -35,10 +34,17 @@ public class UserLocationController {
         return ResponseEntity.ok(userLocation);
     }
 
+//    @GetMapping("getLocations")
+//    @PreAuthorize("hasRole('ROLE_DRIVER')")
+//    public ResponseEntity<Map<String, Object>> handleUserLocations(Principal principal) {
+//        User user = ((User) ((Authentication) principal).getPrincipal());
+//        // Handle the received user location message
+//
+//    }
+
 
     @GetMapping("/disconnect")
     public ResponseEntity<Map<String, Object>> handleUserConnection(Principal principal) {
-
         User user = ((User) ((Authentication) principal).getPrincipal());
         // Handle the received user location message
         log.info("Received user connection message from user: {}", user.getUsername());

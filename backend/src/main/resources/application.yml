@@ -2,3 +2,4 @@ jwt:
   key: "YourSecretKeyHereYourSecretKeyHereYourSecretKeyHereYourSecretKeyHere"
   access-token-expiration-in-minutes: 10000
   refresh-token-expiration-in-days: 30
+
