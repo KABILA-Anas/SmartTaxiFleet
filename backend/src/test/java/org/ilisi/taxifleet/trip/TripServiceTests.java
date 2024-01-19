@@ -2,6 +2,7 @@ package org.ilisi.taxifleet.trip;
 
 import org.ilisi.taxifleet.model.Driver;
 import org.ilisi.taxifleet.model.Passenger;
+import org.ilisi.taxifleet.trip.dto.TripRequestDto;
 import org.ilisi.taxifleet.trip.exception.NotAllowedToChangeTripException;
 import org.ilisi.taxifleet.trip.model.Trip;
 import org.ilisi.taxifleet.trip.model.TripStatus;
