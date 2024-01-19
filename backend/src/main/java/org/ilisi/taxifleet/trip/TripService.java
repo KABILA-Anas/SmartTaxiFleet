@@ -30,7 +30,7 @@ public class TripService {
         if (minDistance == null) {
             minDistance = 2000.0;
         }
-        return tripRepository.findTripNearbyPassengersTrips(latitude,longitude, minDistance);
+        return tripRepository.findTripNearbyPassengersTrips(latitude, longitude, minDistance);
     }
 
     public Trip createTrip(TripRequestDto trip, Passenger passenger) {
@@ -103,13 +103,15 @@ public class TripService {
         throw new TripNotFoundException("Trip not found");
     }
 
-    public Trip getPassengerTripInProgress(Passenger passenger) {
-        List<Trip> trips = tripRepository.findByPassengerTipsInProgress(passenger.getId());
+    public Trip getUserTripInProgress(User user) {
+        List<Trip> trips = user instanceof Passenger ?
+                tripRepository.findByPassengerTipsInProgress(user.getId()) :
+                tripRepository.findByDriverTipsInProgress(user.getId());
         if (trips.isEmpty()) {
             throw new TripNotFoundException("you have no trip in progress");
         }
         if (trips.size() > 1) {
-            log.error("Passenger {} has more than one trip in progress : {}", passenger.getId(), trips);
+            log.error("{} {} has more than one trip in progress : {}", user.getClass().getName(), user.getId(), trips);
         }
         return trips.get(0);
     }
