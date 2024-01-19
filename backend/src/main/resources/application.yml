@@ -3,3 +3,8 @@ jwt:
   access-token-expiration-in-minutes: 10000
   refresh-token-expiration-in-days: 30
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs
