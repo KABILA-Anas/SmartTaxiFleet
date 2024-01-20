@@ -42,7 +42,9 @@ export function SessionProvider(props: React.PropsWithChildren) {
 			const response = await AuthService.login(user);
 			if (response.accessToken) {
 				setSession(JSON.stringify(response));
-				router.push("/screens/passenger/Home")
+				const role= response.user.authorities[0].authority.split('_')[1].toLowerCase()
+				const routerPath:string = `screens/passenger/Home`;
+				router.push(routerPath as never);
 			} else {
 				throw new Error('Login failed');
 			}

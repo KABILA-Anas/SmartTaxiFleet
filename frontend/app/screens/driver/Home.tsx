@@ -8,6 +8,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../../../services/LocationService';
 import CreditCardInfoS from '../../../components/CardComponent';
 import CardComponent from '../../../components/CardComponent';
+import {useSession} from "../../../auth/AuthContext";
 
 
 export default function HomePage() {
@@ -35,14 +36,17 @@ export default function HomePage() {
     ]);
     const mapRef = React.useRef<MapView>(null);
 
+    const { accessToken } = useSession()
+
     /**Api functions */
     const sendLocation = () => {
         if (location) {
             setInterval(() => {
-                LocationService.sendLocation(location);
+                LocationService.sendLocation(location, accessToken);
             }, 10000);
         }
     }
+
 
     useEffect(() => {
         (async () => {
@@ -56,6 +60,8 @@ export default function HomePage() {
                 let location = await Location.getCurrentPositionAsync({});
                 setLocation(location);
             }, 10000);
+
+           sendLocation()
         })();
     }, []);
 

@@ -24,7 +24,7 @@ public class UserLocationController {
 
     private final UserLocationService userLocationService;
 
-    @PostMapping("/")
+    @PostMapping({"/", ""})
     public ResponseEntity<UserLocation> postUserLocation(@RequestBody UserLocationDto userLocationDto,
                                                            Principal principal) {
         User user = ((User) ((Authentication) principal).getPrincipal());
