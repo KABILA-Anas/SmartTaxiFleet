@@ -8,9 +8,9 @@ class MapService {
             return;
         }
 
-        let location = await Location.getCurrentPositionAsync({});
-        return location;
+        return await Location.getCurrentPositionAsync({});
     }
 }
 
-export default new MapService();
+const mapService = new MapService();
+export default mapService;
