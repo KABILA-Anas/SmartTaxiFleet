@@ -42,7 +42,7 @@ export default function HomePage() {
     const sendLocation = () => {
         if (location) {
             setInterval(() => {
-                LocationService.sendLocation(location, accessToken);
+                LocationService.sendLocation(location);
             }, 10000);
         }
     }
