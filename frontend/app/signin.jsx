@@ -5,12 +5,14 @@ import {COLORS} from '../constants/theme'
 import InputComponent from '../components/InputComponent';
 import SubmitButtonComponent from '../components/SubmitButtonComponent';
 import {useSession} from "../auth/AuthContext";
+import { useRouter } from 'expo-router';
 
 export default function LoginForm() {
     const [click, setClick] = useState(false);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const { signIn } = useSession();
+    const router = useRouter();
 
 
     const handleLogin = () => {

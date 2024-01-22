@@ -9,15 +9,12 @@ const httpApi = axios.create({
 })
 
 httpApi.interceptors.request.use(async (config) => {
-    console.log('interceptor 2')
-
+    //console.log('request interceptor')
     const newVar = await getStorageItemAsync(AUTH_STORE_KEY)
-    console.log(newVar)
-
     const {accessToken} = JSON.parse(newVar ?? '{}') as AuthResponse
 
     if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`
+        config.headers!.Authorization = `Bearer ${accessToken}`
     }
     return config;
 })

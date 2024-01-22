@@ -2,11 +2,11 @@ import {API_BASE_URL} from "../constants/api";
 import {httpApi} from "./httpApi";
 
 export default class LocationService {
-    static sendLocation(location, token) {
-        console.log("sendLocation", location);
+    static sendLocation(location) {
+        //console.log("sendLocation", location);
 
         return httpApi.post('/userLocations', location).then(res => {
-            console.log("sendLocation", res);
+            //console.log("sendLocation", res);
             return res.data;
         });
     }

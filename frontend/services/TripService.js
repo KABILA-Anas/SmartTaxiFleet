@@ -1,6 +1,8 @@
 import {API_BASE_URL} from "../constants/api";
+import {httpApi} from "./httpApi";
 
-class TripService {
+
+export default class TripService {
     static nearbyTrips(location) {
         return fetch(`${API_BASE_URL}/nearby?latitude=${location.latitude}&longitude=${location.longitude}`, {
             method: 'GET',
@@ -24,42 +26,37 @@ class TripService {
     }
 
     static finishTrip(tripId) {
-        return fetch(`${API_BASE_URL}/trip/${tripId}/finish`, {
-            method: 'GET',
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("finishTrip", data);
-                return data;
-            });
+        return httpApi.get(`/trip/${tripId}/finish`).then(res => {
+            console.log("finishTrip", res.data);
+            return res.data;
+        });
     }
 
-    static createTrip(sourceLocation, destinationLocation) {
-        return fetch(`${API_BASE_URL}/trip`, {
-            method: 'POST',
-            body: JSON.stringify({
-                sourceLocation,
-                destinationLocation
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("createTrip", data);
-                return data;
-            });
+    static createTrip(pickupLatitude, pickupLongitude, destinationLatitude, destinationLongitude) {
+        return httpApi.post('/trips/request', {
+            pickupLatitude,
+            pickupLongitude,
+            destinationLatitude,
+            destinationLongitude
+        }).then(res => {
+            console.log("createTrip", res.data);
+            return res.data;
+        });
     }
 
-    static checkProgress() {
-        return fetch(`${API_BASE_URL}/trips/in-progress`, {
+    static tripInProgress() {
+        /*return fetch(`${API_BASE_URL}/trips/in-progress`, {
             method: 'GET',
         })
             .then(res => res.json())
             .then(data => {
                 console.log("checkProgress", data);
                 return data;
-            });
+            });*/
+        
+        return httpApi.get('/trips/in-progress').then(res => {
+            console.log("tripInProgress", res.data);
+            return res.data;
+        });
     }
 }

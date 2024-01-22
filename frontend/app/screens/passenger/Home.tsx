@@ -6,6 +6,7 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import {COLORS} from '../../../constants/theme'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../../../services/LocationService';
+import TripService from '../../../services/TripService';
 import {useSession} from "../../../auth/AuthContext";
 
 
@@ -17,6 +18,7 @@ export default function HomePage() {
 	const [currRegion, setCurrentRegion] = useState<Region | null>(null);
 	const [startTrip, setStartTrip] = useState(false);
 	const [trip, setTrip] = useState(false);
+	const [tripId, setTripId] = useState(0);
 	const [driverLocation, setDriverLocation] = useState({latitude: 0, longitude: 0});
 	const [loading, setLoading] = useState(false);
 	const mapRef = React.useRef<MapView>(null);
@@ -37,6 +39,50 @@ export default function HomePage() {
 		setdestination({latitude: 0, longitude: 0});
 	}
 
+	const initTrip = () => {
+		const sourceLocation = {pickupLatitude: location?.coords.latitude, pickupLongitude: location?.coords.longitude};
+		const destinationLocation = {distinationLatitude: destination.latitude, distinationLongitude: destination.longitude};
+		TripService.createTrip(sourceLocation.pickupLatitude, sourceLocation.pickupLongitude, destinationLocation.distinationLatitude, destinationLocation.distinationLongitude)
+		.then((trip) => {
+
+			console.log('Trip created: ', trip);
+			setLoading(true);
+			setStartTrip(false);
+			setTripId(trip.id);
+			let interval = setInterval(() => {
+				
+				TripService.tripInProgress()
+				.then(({trip,userLocation}) => {
+					console.log('Trip in progress: ', trip);
+					if(trip?.status == 'ACCEPTED'){	
+						console.log('Driver location: ', userLocation);
+						setTrip(true);
+						setDriverLocation({latitude: userLocation.latitude, longitude: userLocation.longitude});
+						setLoading(false);
+					}
+				})
+				.catch((error) => {
+					console.error(error);
+					setLoading(false);
+					clearInterval(interval);
+				});
+			}, 8000);
+	
+			mapRef.current?.animateToRegion({
+				latitude: location?.coords.latitude || 37.78825,
+				longitude: location?.coords.longitude || -122.4324,
+				latitudeDelta: 0.0922,
+				longitudeDelta: 0.0421,
+			}, 1000);
+
+		})
+		.catch((error) => {
+			console.error(error);
+		});
+
+
+	}
+	
 	const handleConfirmTrip = () => {
 		Alert.alert(
 			"Confirm destination",
@@ -48,25 +94,7 @@ export default function HomePage() {
 					style: "cancel"
 				},
 				{
-					text: "OK", onPress: () => {
-						setLoading(true);
-						setStartTrip(false);
-
-						setTimeout(() => {
-							setTrip(true);
-							setDriverLocation({latitude: 33.71774591127574, longitude: -7.35055675730109});
-							setLoading(false);
-						}, 3000);
-
-						mapRef.current?.animateToRegion({
-							latitude: location?.coords.latitude || 37.78825,
-							longitude: location?.coords.longitude || -122.4324,
-							latitudeDelta: 0.0922,
-							longitudeDelta: 0.0421,
-						}, 1000);
-
-
-					}
+					text: "OK", onPress: initTrip
 				}
 			]
 		);
@@ -84,16 +112,22 @@ export default function HomePage() {
 				},
 				{
 					text: "OK", onPress: () => {
-						setTrip(false);
-						setdestination({latitude: 0, longitude: 0});
-						setDriverLocation({latitude: 0, longitude: 0});
+						TripService.finishTrip(tripId)
+						.then(() => {
+							setTrip(false);
+							setdestination({latitude: 0, longitude: 0});
+							setDriverLocation({latitude: 0, longitude: 0});
 
-						mapRef.current?.animateToRegion({
-							latitude: location?.coords.latitude || 37.78825,
-							longitude: location?.coords.longitude || -122.4324,
-							latitudeDelta: 0.0922,
-							longitudeDelta: 0.0421,
-						}, 1000);
+							mapRef.current?.animateToRegion({
+								latitude: location?.coords.latitude || 37.78825,
+								longitude: location?.coords.longitude || -122.4324,
+								latitudeDelta: 0.0922,
+								longitudeDelta: 0.0421,
+							}, 1000);
+						})
+						.catch((error) => {
+							console.error(error);
+						});
 					}
 				}
 			]
@@ -105,9 +139,9 @@ export default function HomePage() {
 	const sendLocation = () => {
 		setInterval(() => {
 			if (location) {
-				LocationService.sendLocation(location, accessToken).then((r: any) => console.log(r));
+				LocationService.sendLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
 			}
-		}, 8000);
+		}, 15000);
 	}
 
 	sendLocation()

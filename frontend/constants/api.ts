@@ -10,7 +10,7 @@ const api = axios.create({
 export default api;*/
 
 // const hostIp = '192.168.1.44';
-const hostIp = '192.168.137.163';
+const hostIp = '192.168.0.105';
 const hostPort = 8080;
 export const API_BASE_URL = `http://${hostIp}:${hostPort}`;
 
