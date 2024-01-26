@@ -8,7 +8,7 @@ const CardComponent = ({passenger}) => {
           <View key={passenger.id} style={styles.cardContainer}>
             <View style={styles.cardInfoContainer}>
                 <View style={styles.cardInfoItem}>
-                    <Icon name="user" size={40} color="gray" />
+                    <Icon name="user" size={40} color={passenger.color} />
                 </View>
               <View style={styles.cardInfoItem}>
                 <Text style={styles.cardInfoLabel}>Name</Text>
@@ -16,7 +16,7 @@ const CardComponent = ({passenger}) => {
               </View>
               <View style={styles.cardInfoItem}>
                 <Text style={styles.cardInfoLabel}>Distance</Text>
-                <Text style={styles.cardNumber}>3.5km</Text>
+                <Text style={styles.cardNumber}>{passenger.distance}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.paymentButton}>

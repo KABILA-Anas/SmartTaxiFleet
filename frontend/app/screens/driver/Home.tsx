@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import MapView, {PROVIDER_DEFAULT, Region, Marker, Polyline} from "react-native-maps";
-import { StyleSheet, View, Text, ScrollView, Animated } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import {COLORS} from '../../../constants/theme'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../../../services/LocationService';
-import CreditCardInfoS from '../../../components/CardComponent';
 import CardComponent from '../../../components/CardComponent';
-import {useSession} from "../../../auth/AuthContext";
+import MapViewDirections from 'react-native-maps-directions';
+//import {useSession} from "../../../auth/AuthContext";
 
 
 export default function HomePage() {
 
+    const Google_API_KEY = 'AIzaSyBz6vgE5rU0u6-Mi5R5hTwW9L93m_fCSYE';
+
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
     const [errorMsg, setErrorMsg] = useState<String | null>(null);
     const [currRegion, setCurrentRegion] = useState<Region | null>(null);
+    const [destination, setDestination] = useState<any | null>(null); //destination to be matched with driver
+    const [passenger, setPassenger] = useState<any | null>(null); //passenger to be matched with driver
+    const [isOnTrip, setIsOnTrip] = useState<boolean>(false);
     const [passengers, setPassengers] = useState<any[]>([
         {
             id: 1,
@@ -35,8 +41,57 @@ export default function HomePage() {
         }
     ]);
     const mapRef = React.useRef<MapView>(null);
+    const scrollRef = React.useRef<ScrollView>(null);
+    //const { accessToken } = useSession()
+    
+    // get distance between two points using google maps api
+    const getDistance = async (origin: any, destination: any) => {
+        try {
+            let response = await fetch(
+                `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origin.latitude},${origin.longitude}&destinations=${destination.latitude},${destination.longitude}&key=${Google_API_KEY}`
+            );
+            let json = await response.json();
+            return json.rows[0].elements[0].distance.text;
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-    const { accessToken } = useSession()
+    const getMarkerColorByDistance = (distance: number) => {
+        if (distance < 1) {
+            return 'green';
+        } else if (distance < 2) {
+            return 'orange';
+        } else {
+            return 'red';
+        }
+    };
+
+    const getMarkerSizeByDistance = (distance: number) => {
+        if (distance < 1) {
+            return 20;
+        } else if (distance < 2) {
+            return 15;
+        } else {
+            return 10;
+        }
+    };
+
+    const getMarkerColor = async(passenger: any) => {
+        const distance = await getDistance(location?.coords, passenger.location);
+        const color = getMarkerColorByDistance(parseFloat(distance));
+        return {distance, color};
+    }
+
+    const getPassengers = () => {
+        setPassengers(passengers.map((passenger) => {
+            getMarkerColor(passenger).then(({distance, color}) => {
+                passenger.color = color;
+                passenger.distance = distance;
+            });
+            return passenger;
+        }));
+    }
 
     /**Api functions */
     const sendLocation = () => {
@@ -45,6 +100,37 @@ export default function HomePage() {
                 LocationService.sendLocation(location);
             }, 10000);
         }
+    }
+
+    const getNearbyPassengers = () => {
+    }
+    
+
+    const handleMarkerPress = (index: number) => {
+        scrollRef.current?.scrollTo({
+            x: index * 300,
+            animated: true,
+        });
+    }
+
+    const handleAutoMatch = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            setDestination({
+                latitude: 33.69042727337634,
+                longitude: -7.357646506279707,
+            });
+            setPassenger({
+                id: 1,
+                name: 'John Doe1',
+                location: {
+                    latitude: 33.71774591127574,
+                    longitude: -7.35055675730109,
+                },
+            });
+            setIsOnTrip(true);
+        }, 3000);
     }
 
 
@@ -56,14 +142,24 @@ export default function HomePage() {
                 return;
             }
 
+            //let location = await Location.getCurrentPositionAsync({});
+            setLocation(await Location.getCurrentPositionAsync({}));
+
             setInterval(async () => {
-                let location = await Location.getCurrentPositionAsync({});
-                setLocation(location);
+                setLocation(await Location.getCurrentPositionAsync({}));
+                console.log('location updated', location);
             }, 10000);
 
-           sendLocation()
+           //sendLocation()
         })();
     }, []);
+
+    useEffect(() => {
+        if (location != null) {
+            getPassengers();
+            //console.log('passengers', passengers);
+        }
+    }, [location]);
 
     return (
         <View style={styles.container}>
@@ -90,22 +186,87 @@ export default function HomePage() {
             >
 
                 {
-                    passengers.map((passenger) => (
+                    !isOnTrip && passengers.map((passenger, index) => (
                         <Marker
                             key={passenger.id}
                             coordinate={passenger.location}
                             title={passenger.name}
-                            description="3.5km"
+                            description={passenger.distance}
+                            onPress={() => handleMarkerPress(index)}
                         >
-                            <Icon name="user" size={35} color="#900" />
+                            <Icon name="user" size={35} color={passenger.color} />
                         </Marker>
                     ))
                 }
+
+{
+                isOnTrip && (
+                    <>
+                    <MapViewDirections
+                        origin={location?.coords}
+                        destination={destination}
+                        apikey={Google_API_KEY}
+                        strokeWidth={3}
+                        strokeColor="hotpink"
+                        optimizeWaypoints={true}
+                        onStart={(params) => {
+                            console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
+                        }}
+                        onError={(errorMessage) => {
+                            console.log('GOT AN ERROR');
+                        }}
+                    />
+                
+                    <MapViewDirections
+                        origin={location?.coords}
+                        destination={passenger.location}
+                        apikey={Google_API_KEY}
+                        strokeWidth={3}
+                        strokeColor="hotpink"
+                        optimizeWaypoints={true}
+                        onStart={(params) => {
+                            console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
+                        }}
+                        onError={(errorMessage) => {
+                            console.log('GOT AN ERROR');
+                        }}
+                    />
+                
+                    <Marker
+                        coordinate={passenger.location}
+                        title={passenger.name}
+                        description="3.5km"
+                    >
+                        <Icon name="user" size={35} color="#900" />
+                    </Marker>
+                    
+                    <Marker
+                        coordinate={destination}
+                        title="Destination"
+                        description="3.5km"
+                    >
+                        <Icon name="flag" size={35} color="#900" />
+                    </Marker>
+                    </>
+                )
+            }
                 
             </MapView>
 
+            
+			{loading && (
+				<View style={styles.loadingOverlay}>
+					<ActivityIndicator size="large" color="#3498db"/>
+				</View>
+			)}
+            
+            
+
+    { !isOnTrip && (
+        <>
         <View style={cradsViewStyles.container}>
             <ScrollView
+                ref={scrollRef}
                 horizontal
                 scrollEventThrottle={1}
                 contentContainerStyle={cradsViewStyles.carouselContainer}
@@ -127,21 +288,30 @@ export default function HomePage() {
 
                 {
                     passengers.map((passenger) => (
-                        <CardComponent passenger={passenger} />
+                        <CardComponent
+                            key={passenger.id}
+                            passenger={passenger} 
+                        />
                     ))
                 }
 
             </ScrollView>
         </View>
+    
 
         <View style={iconButtonStyles.container}>
-            <TouchableOpacity style={iconButtonStyles.button}>
+            <TouchableOpacity
+                    style={iconButtonStyles.button}
+                    onPress={handleAutoMatch}
+            >
                 <View style={iconButtonStyles.iconContainer}>
                     <Icon name="car" size={20} color="#fff" />
                 </View>
                 <Text style={iconButtonStyles.buttonText}>Auto match client</Text>
             </TouchableOpacity>
         </View>
+        </>
+        )}
 
         </View>
     );
