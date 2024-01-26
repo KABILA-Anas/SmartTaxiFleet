@@ -13,7 +13,7 @@ import MapViewDirections from 'react-native-maps-directions';
 
 export default function HomePage() {
 
-    const Google_API_KEY = 'AIzaSyBz6vgE5rU0u6-Mi5R5hTwW9L93m_fCSYE';
+    const Google_API_KEY = '';
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
