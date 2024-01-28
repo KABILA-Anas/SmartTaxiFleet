@@ -30,7 +30,6 @@ export default class AuthService {
         })
             .then(res => res.json())
             .then(data => {
-                Alert.alert("Success", JSON.stringify(data));
                 return data;
             })
     }

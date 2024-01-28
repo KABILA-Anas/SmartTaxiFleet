@@ -44,7 +44,8 @@ export function SessionProvider(props: React.PropsWithChildren) {
             if (response.accessToken) {
                 setSession(JSON.stringify(response));
                 const role = response.user.authorities[0].authority.split('_')[1].toLowerCase()
-                const routerPath: string = `screens/passenger/Home`;
+                console.log(`role: ${role}`)
+                const routerPath: string = `screens/${role}/Home`;
                 router.push(routerPath as never);
             } else {
                 throw new Error('Login failed');

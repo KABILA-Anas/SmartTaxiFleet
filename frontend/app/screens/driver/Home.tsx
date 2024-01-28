@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import MapView, {PROVIDER_DEFAULT, Region, Marker, Polyline} from "react-native-maps";
+import React, { useState, useEffect, useRef } from 'react';
+import MapView, {PROVIDER_DEFAULT, Region, Marker} from "react-native-maps";
 import { StyleSheet, View, Text, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -8,12 +8,12 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../../../services/LocationService';
 import CardComponent from '../../../components/CardComponent';
 import MapViewDirections from 'react-native-maps-directions';
-//import {useSession} from "../../../auth/AuthContext";
+import TripService from '../../../services/TripService';
 
 
 export default function HomePage() {
 
-    const Google_API_KEY = 'AIzaSyBz6vgE5rU0u6-Mi5R5hTwW9L93m_fCSYE';
+    const Google_API_KEY = '';
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -22,36 +22,21 @@ export default function HomePage() {
     const [destination, setDestination] = useState<any | null>(null); //destination to be matched with driver
     const [passenger, setPassenger] = useState<any | null>(null); //passenger to be matched with driver
     const [isOnTrip, setIsOnTrip] = useState<boolean>(false);
-    const [passengers, setPassengers] = useState<any[]>([
-        {
-            id: 1,
-            name: 'John Doe1',
-            location: {
-                latitude: 33.71774591127574,
-                longitude: -7.35055675730109,
-            },
-        },
-        {
-            id: 2,
-            name: 'John Doe2',
-            location: {
-                latitude: 33.69042727337634,
-                longitude: -7.357646506279707,
-            },
-        }
-    ]);
+    const [passengers, setPassengers] = useState<any[]>([]);
     const mapRef = React.useRef<MapView>(null);
     const scrollRef = React.useRef<ScrollView>(null);
+    const locationRef = useRef<Location.LocationObject | null>(location);
     //const { accessToken } = useSession()
     
     // get distance between two points using google maps api
-    const getDistance = async (origin: any, destination: any) => {
+    const getDistance = async (origin: any, destinations: any) => {
         try {
-            let response = await fetch(
-                `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origin.latitude},${origin.longitude}&destinations=${destination.latitude},${destination.longitude}&key=${Google_API_KEY}`
-            );
+            const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origin.latitude},${origin.longitude}&destinations=${destinations}&key=${Google_API_KEY}`;
+            console.log(`apiUrl: ${apiUrl}`);
+            let response = await fetch(apiUrl);
             let json = await response.json();
-            return json.rows[0].elements[0].distance.text;
+            console.log(`elements: ${json.rows[0].elements}`);
+            return json.rows[0].elements;
         } catch (error) {
             console.error(error);
         }
@@ -77,32 +62,67 @@ export default function HomePage() {
         }
     };
 
-    const getMarkerColor = async(passenger: any) => {
-        const distance = await getDistance(location?.coords, passenger.location);
-        const color = getMarkerColorByDistance(parseFloat(distance));
-        return {distance, color};
-    }
-
-    const getPassengers = () => {
-        setPassengers(passengers.map((passenger) => {
-            getMarkerColor(passenger).then(({distance, color}) => {
-                passenger.color = color;
-                passenger.distance = distance;
-            });
-            return passenger;
-        }));
-    }
-
     /**Api functions */
-    const sendLocation = () => {
-        if (location) {
-            setInterval(() => {
-                LocationService.sendLocation(location);
-            }, 10000);
+    const sendLocation = async() => {
+        console.log('start getting location');
+        const location = await Location.getLastKnownPositionAsync({});
+        setLocation(location);
+        locationRef.current = location;
+        console.log('start sending location : ', location?.coords);
+
+        if(location && location.coords){
+            await LocationService.sendLocation({latitude: location.coords.latitude, longitude: location.coords.longitude})
         }
+        setTimeout(async() => {
+            await sendLocation();
+        }, 10000);
+        
     }
 
-    const getNearbyPassengers = () => {
+    const getNearbyPassengers =async() => {
+       //setTimeout(async() => {
+           // const location = await Location.getCurrentPositionAsync({});
+           const localLocation = locationRef.current;
+            console.log('start getting nearby trips : ', localLocation?.coords);
+            if(localLocation?.coords && !isOnTrip){
+                TripService.nearbyTrips({latitude: localLocation.coords.latitude, longitude: localLocation.coords.longitude})
+                .then(async (trips) => {
+                    if(trips.length == 0)
+                        return [];
+                    
+                    const distances = await getDistance(localLocation?.coords, trips.reduce((acc: string, trip: any) => {
+                        return acc + '|' + trip.departureLatitude + ',' + trip.departureLongitude;
+                    }, '').substring(1))
+                    .then((elements) => {
+                        return elements.map((element: any) => {
+                            if(element.status == 'OK')
+                                return element.distance.text;
+                            return 'N/A';
+                        });
+                    });
+                    console.log('distances: ', distances);
+                    return trips.map((trip: any, index: number) => {
+                        return {
+                            id: trip.id,
+                            name: trip.passenger.firstName,
+                            location: {
+                                latitude: trip.departureLatitude,
+                                longitude: trip.departureLongitude,
+                            },
+                            distance: distances[index],
+                            color: getMarkerColorByDistance(parseFloat(distances[index]))
+                        }
+                    });
+                })
+                .then((passengers) => {
+                    setPassengers(passengers);
+                })
+            }
+            setTimeout(async() => {
+                await getNearbyPassengers();
+            }, 10000);
+        //}, 10000);
+        
     }
     
 
@@ -115,51 +135,65 @@ export default function HomePage() {
 
     const handleAutoMatch = () => {
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            setDestination({
-                latitude: 33.69042727337634,
-                longitude: -7.357646506279707,
-            });
-            setPassenger({
-                id: 1,
-                name: 'John Doe1',
-                location: {
-                    latitude: 33.71774591127574,
-                    longitude: -7.35055675730109,
-                },
-            });
-            setIsOnTrip(true);
-        }, 3000);
+        TripService.autoMatchTrip()
+        .then(() => {
+            console.log('auto match trip success');
+            getTripInProgress();
+        });
     }
 
+    const getTripInProgress = () => {
+        let interval = setInterval(() => {
+            TripService.tripInProgress()
+            .then(({trip,userLocation}) => {
+                console.log('Trip in progress: ', trip);
+                if(trip?.status == 'ACCEPTED'){	
+                    setDestination({
+                        latitude: trip.destinationLatitude,
+                        longitude: trip.destinationLongitude,
+                    });
+                    setPassenger({
+                        id: trip.id,
+                        name: trip.passenger.firstName,
+                        location: {
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                        },
+                    });
+                    setLoading(false);
+                    setIsOnTrip(true);
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                setLoading(false);
+                setIsOnTrip(false);
+                clearInterval(interval);
+            });
+        }, 8000);
+    }
 
     useEffect(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied');
-                return;
-            }
+            Location.requestForegroundPermissionsAsync()
+            .then(async({status}) => {
+                if (status !== 'granted') {
+                    setErrorMsg('Permission to access location was denied');
+                    return;
+                }
+                const location = await Location.getCurrentPositionAsync({});
+                setLocation(location);
+                locationRef.current = location;
 
-            //let location = await Location.getCurrentPositionAsync({});
-            setLocation(await Location.getCurrentPositionAsync({}));
-
-            setInterval(async () => {
-                setLocation(await Location.getCurrentPositionAsync({}));
-                console.log('location updated', location);
-            }, 10000);
-
-           //sendLocation()
-        })();
+                setTimeout(async() => {
+                    await sendLocation();
+                    await getNearbyPassengers();
+                }, 1000);
+            })
     }, []);
 
-    useEffect(() => {
-        if (location != null) {
-            getPassengers();
-            //console.log('passengers', passengers);
-        }
-    }, [location]);
+    
+    
+    
 
     return (
         <View style={styles.container}>
@@ -290,7 +324,15 @@ export default function HomePage() {
                     passengers.map((passenger) => (
                         <CardComponent
                             key={passenger.id}
-                            passenger={passenger} 
+                            passenger={passenger}
+                            onPress={() => {
+                                setLoading(true);
+                                TripService.acceptTrip(passenger.id)
+                                .then(() => {
+                                    console.log('accept trip success');
+                                    getTripInProgress();
+                                });
+                            }} 
                         />
                     ))
                 }

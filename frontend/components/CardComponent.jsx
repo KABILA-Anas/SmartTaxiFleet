@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../constants/theme';
 
-const CardComponent = ({passenger}) => {
+const CardComponent = ({passenger, onPress}) => {
 
   return (
           <View key={passenger.id} style={styles.cardContainer}>
@@ -19,7 +19,7 @@ const CardComponent = ({passenger}) => {
                 <Text style={styles.cardNumber}>{passenger.distance}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.paymentButton}>
+            <TouchableOpacity style={styles.paymentButton} onPress={onPress}>
               <Text style={styles.buttonText}>Accept</Text>
             </TouchableOpacity>
           </View>

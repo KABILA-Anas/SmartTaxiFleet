@@ -1,28 +1,23 @@
-import {API_BASE_URL} from "../constants/api";
 import {httpApi} from "./httpApi";
 
 
 export default class TripService {
+    
     static nearbyTrips(location) {
-        return fetch(`${API_BASE_URL}/nearby?latitude=${location.latitude}&longitude=${location.longitude}`, {
-            method: 'GET',
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("nearbyTrips", data);
-                return data;
-            });
+        console.log("Location", location);
+        return httpApi.get(`/trips/nearby?latitude=${location.latitude}&longitude=${location.longitude}`)
+        .then(res => {
+            console.log("nearbyTrips", res.data);
+            return res.data;
+        });
+            
     }
 
     static acceptTrip(tripId) {
-        return fetch(`${API_BASE_URL}/trip/${tripId}/accept`, {
-            method: 'GET',
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("acceptTrip", data);
-                return data;
-            });
+        return httpApi.get(`/trip/${tripId}/accept`).then(res => {
+            console.log("acceptTrip", res.data);
+            return res.data;
+        });
     }
 
     static finishTrip(tripId) {
@@ -45,18 +40,18 @@ export default class TripService {
     }
 
     static tripInProgress() {
-        /*return fetch(`${API_BASE_URL}/trips/in-progress`, {
-            method: 'GET',
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("checkProgress", data);
-                return data;
-            });*/
-        
         return httpApi.get('/trips/in-progress').then(res => {
             console.log("tripInProgress", res.data);
             return res.data;
         });
     }
+
+    static autoMatchTrip() {
+        return httpApi.get('/trip/auto/accept').then(res => {
+            console.log("autoMatchTrip", res.data);
+            return res.data;
+        });
+    }
+
+
 }
