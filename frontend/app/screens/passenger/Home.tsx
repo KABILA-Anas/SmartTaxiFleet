@@ -13,8 +13,10 @@ import {useSession} from "../../../auth/AuthContext";
 export default function HomePage() {
 
 	const [location, setLocation] = useState<Location.LocationObject | null>(null);
-	const [destination, setdestination] = useState({latitude: 0, longitude: 0});
+	const [destination, setDestination] = useState({latitude: 0, longitude: 0});
 	const [errorMsg, setErrorMsg] = useState<String | null>(null);
+	const [routeCoordinates, setRouteCoordinates] = useState<Array<any>>([]);
+	const [driverCoordinates, setDriverCoordinates] = useState<Array<any>>([]);
 	const [currRegion, setCurrentRegion] = useState<Region | null>(null);
 	const [startTrip, setStartTrip] = useState(false);
 	const [trip, setTrip] = useState(false);
@@ -23,9 +25,28 @@ export default function HomePage() {
 	const [loading, setLoading] = useState(false);
 	const mapRef = React.useRef<MapView>(null);
 
+	const getRouteCoordinates = (origin: any, destination: any) => {
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?access_token=pk.eyJ1IjoiMHg0bnMiLCJhIjoiY2xvNjNjYXI0MDFwdTJsbXN4Y3NrcHgxOCJ9.FD6viYFpWMcdE8FJkrqUZw&geometries=geojson`;
+        console.log('Route url: ', url);
+        return fetch(url)
+            .then((res) => res.json())
+    }
+
 	const handlePress = (e: any) => {
 		if (startTrip) {
-			setdestination(e.nativeEvent.coordinate);
+			setDestination(e.nativeEvent.coordinate);
+			getRouteCoordinates(location?.coords, e.nativeEvent.coordinate)
+            .then((res) => {
+                //console.log('Route: ', res.routes[0].geometry.coordinates);
+                console.log('Route: ', res);
+                setRouteCoordinates(res.routes[0].geometry.coordinates.map((coordinate: any) => {
+					return {
+						latitude: coordinate[1],
+						longitude: coordinate[0]
+					}
+				}));
+                //console.log('Coordinates: ', coordinates);
+            })
 		}
 	}
 
@@ -36,7 +57,7 @@ export default function HomePage() {
 
 	const handleCancelTrip = () => {
 		setStartTrip(false);
-		setdestination({latitude: 0, longitude: 0});
+		setDestination({latitude: 0, longitude: 0});
 	}
 
 	const initTrip = () => {
@@ -58,6 +79,20 @@ export default function HomePage() {
 						console.log('Driver location: ', userLocation);
 						setTrip(true);
 						setDriverLocation({latitude: userLocation.latitude, longitude: userLocation.longitude});
+						
+						if(driverCoordinates.length == 0){
+							getRouteCoordinates(location?.coords, userLocation)
+							.then((res) => {
+								console.log('Driver Route: ', res);
+								setDriverCoordinates(res.routes[0].geometry.coordinates.map((coordinate: any) => {
+									return {
+										latitude: coordinate[1],
+										longitude: coordinate[0]
+									}
+								}));
+							});
+						}
+						
 						setLoading(false);
 					}
 				})
@@ -65,6 +100,10 @@ export default function HomePage() {
 					console.error(error);
 					setLoading(false);
 					clearInterval(interval);
+					setRouteCoordinates([]);
+					setDriverCoordinates([]);
+					setDriverLocation({latitude: 0, longitude: 0});
+					setDestination({latitude: 0, longitude: 0});
 				});
 			}, 8000);
 	
@@ -115,7 +154,7 @@ export default function HomePage() {
 						TripService.finishTrip(tripId)
 						.then(() => {
 							setTrip(false);
-							setdestination({latitude: 0, longitude: 0});
+							setDestination({latitude: 0, longitude: 0});
 							setDriverLocation({latitude: 0, longitude: 0});
 
 							mapRef.current?.animateToRegion({
@@ -193,7 +232,7 @@ export default function HomePage() {
                     coordinate={destination}
                     title="destination"
                     description="destination"
-                    onDragEnd={(e) => setdestination(e.nativeEvent.coordinate)}
+                    onDragEnd={(e) => setDestination(e.nativeEvent.coordinate)}
                 />
 				}
 
@@ -209,15 +248,9 @@ export default function HomePage() {
 				}
 
 				{
-					destination.latitude != 0 && destination.longitude != 0 && (startTrip || trip) &&
+					routeCoordinates.length != 0 && (startTrip || trip) &&
                 <Polyline
-                    coordinates={[
-							  {
-								  latitude: location?.coords.latitude || 37.78825,
-								  longitude: location?.coords.longitude || -122.4324
-							  },
-							  {latitude: destination.latitude, longitude: destination.longitude},
-						  ]}
+                    coordinates={routeCoordinates}
                     strokeColor="#000"
                     strokeColors={[
 							  '#7F0000',
@@ -232,15 +265,9 @@ export default function HomePage() {
 				}
 
 				{
-					driverLocation.latitude != 0 && driverLocation.longitude != 0 && trip &&
+					driverCoordinates.length !== 0 && trip &&
                 <Polyline
-                    coordinates={[
-							  {
-								  latitude: location?.coords.latitude || 37.78825,
-								  longitude: location?.coords.longitude || -122.4324
-							  },
-							  {latitude: driverLocation.latitude, longitude: driverLocation.longitude},
-						  ]}
+                    coordinates={driverCoordinates}
                     strokeColor="#000"
                     strokeColors={[
 							  '#7F0000',
