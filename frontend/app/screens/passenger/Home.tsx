@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import MapView, {Marker, Polyline, PROVIDER_DEFAULT, Region} from "react-native-maps";
 import {ActivityIndicator, Alert, StyleSheet, Text, View} from 'react-native';
 import * as Location from 'expo-location';
@@ -24,7 +24,8 @@ export default function HomePage() {
 	const [driverLocation, setDriverLocation] = useState({latitude: 0, longitude: 0});
 	const [loading, setLoading] = useState(false);
 	const mapRef = React.useRef<MapView>(null);
-
+	const locationRef = useRef<Location.LocationObject | null>(location);
+	const driverCoordinatesRef = useRef<Array<any>>(driverCoordinates);
 	const getRouteCoordinates = (origin: any, destination: any) => {
         const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?access_token=pk.eyJ1IjoiMHg0bnMiLCJhIjoiY2xvNjNjYXI0MDFwdTJsbXN4Y3NrcHgxOCJ9.FD6viYFpWMcdE8FJkrqUZw&geometries=geojson`;
         console.log('Route url: ', url);
@@ -50,6 +51,37 @@ export default function HomePage() {
 		}
 	}
 
+	const handleRefreshRoutes = () => {
+		if(trip) {
+			//refresh driver route
+			setLoading(true);
+			getRouteCoordinates(location?.coords, driverLocation)
+				.then((res) => {
+					console.log('Driver Route: ', res);
+					driverCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
+						return {
+							latitude: coordinate[1],
+							longitude: coordinate[0]
+						}
+					});
+					setDriverCoordinates(driverCoordinatesRef.current);
+				});
+
+			//refresh passenger route
+			getRouteCoordinates(location?.coords, destination)
+				.then((res) => {
+					console.log('Route: ', res);
+					setRouteCoordinates(res.routes[0].geometry.coordinates.map((coordinate: any) => {
+						return {
+							latitude: coordinate[1],
+							longitude: coordinate[0]
+						}
+					}));
+				});
+			setLoading(false);
+		}
+
+	}
 	const handleStartTrip = () => {
 		setStartTrip(true);
 		console.log('Current region: ', currRegion);
@@ -58,6 +90,7 @@ export default function HomePage() {
 	const handleCancelTrip = () => {
 		setStartTrip(false);
 		setDestination({latitude: 0, longitude: 0});
+		setRouteCoordinates([]);
 	}
 
 	const initTrip = () => {
@@ -71,37 +104,41 @@ export default function HomePage() {
 			setStartTrip(false);
 			setTripId(trip.id);
 			let interval = setInterval(() => {
-				
+
 				TripService.tripInProgress()
 				.then(({trip,userLocation}) => {
 					console.log('Trip in progress: ', trip);
-					if(trip?.status == 'ACCEPTED'){	
+					if(trip?.status == 'ACCEPTED'){
 						console.log('Driver location: ', userLocation);
-						setTrip(true);
 						setDriverLocation({latitude: userLocation.latitude, longitude: userLocation.longitude});
-						
-						if(driverCoordinates.length == 0){
+						console.log('Driver coordinates: ', driverCoordinatesRef.current);
+						if(driverCoordinatesRef.current.length == 0){
 							getRouteCoordinates(location?.coords, userLocation)
 							.then((res) => {
 								console.log('Driver Route: ', res);
-								setDriverCoordinates(res.routes[0].geometry.coordinates.map((coordinate: any) => {
+								driverCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
 									return {
 										latitude: coordinate[1],
 										longitude: coordinate[0]
 									}
-								}));
+								});
+								setDriverCoordinates(driverCoordinatesRef.current);
 							});
+
 						}
-						
+
+						setTrip(true);
 						setLoading(false);
 					}
 				})
 				.catch((error) => {
-					console.error(error);
-					setLoading(false);
+					console.log('Error: ', error);
 					clearInterval(interval);
+					setLoading(false);
+					setTrip(false);
 					setRouteCoordinates([]);
 					setDriverCoordinates([]);
+					driverCoordinatesRef.current = [];
 					setDriverLocation({latitude: 0, longitude: 0});
 					setDestination({latitude: 0, longitude: 0});
 				});
@@ -173,32 +210,38 @@ export default function HomePage() {
 		);
 	}
 
-	const {accessToken} = useSession();
 	/**Api functions */
-	const sendLocation = () => {
-		setInterval(() => {
-			if (location) {
-				LocationService.sendLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
-			}
-		}, 15000);
-	}
+	const sendLocation = async() => {
+        console.log('start getting location');
+        const location = await Location.getLastKnownPositionAsync({});
+        setLocation(location);
+        locationRef.current = location;
+        console.log('start sending location : ', location?.coords);
 
-	sendLocation()
+        if(location && location.coords){
+            await LocationService.sendLocation({latitude: location.coords.latitude, longitude: location.coords.longitude})
+        }
+        setTimeout(async() => {
+            await sendLocation();
+        }, 10000);
+        
+    }
 
 	useEffect(() => {
-		(async () => {
-			let {status} = await Location.requestForegroundPermissionsAsync();
+		Location.requestForegroundPermissionsAsync()
+		.then(async({status}) => {
 			if (status !== 'granted') {
 				setErrorMsg('Permission to access location was denied');
 				return;
 			}
+			const location = await Location.getCurrentPositionAsync({});
+			setLocation(location);
+			locationRef.current = location;
 
-			setInterval(async () => {
-				let location = await Location.getCurrentPositionAsync({});
-				setLocation(location);
-			}, 6000);
-		})();
-
+			setTimeout(async() => {
+				await sendLocation();
+			}, 1000);
+		})
 	}, []);
 
 	return (
@@ -285,19 +328,28 @@ export default function HomePage() {
 
 			{loading && (
 				<View style={styles.loadingOverlay}>
-					<ActivityIndicator size="large" color="#3498db"/>
+					<ActivityIndicator size="large" color="#3498db" style={{padding: 12,borderRadius: 12}} />
+					<Text style={{fontSize: 18, marginTop: 12}}>Waiting for driver to accept ...</Text>
 				</View>
 			)}
 
 			<View style={iconButtonStyles.container}>
 				{
 					trip ? (
-							<TouchableOpacity style={iconButtonStyles.button} onPress={handleFinishTrip}>
-								<View style={iconButtonStyles.iconContainer}>
-									<Icon name="flag-checkered" size={20} color="#fff"/>
-								</View>
-								<Text style={iconButtonStyles.buttonText}>Finish trip</Text>
-							</TouchableOpacity>
+							<>
+								<TouchableOpacity style={iconButtonStyles.button} onPress={handleFinishTrip}>
+									<View style={iconButtonStyles.iconContainer}>
+										<Icon name="flag-checkered" size={20} color="#fff"/>
+									</View>
+									<Text style={iconButtonStyles.buttonText}>Finish trip</Text>
+								</TouchableOpacity>
+								<TouchableOpacity style={iconButtonStyles.button} onPress={handleRefreshRoutes}>
+									<View style={iconButtonStyles.iconContainer}>
+										<Icon name="refresh" size={20} color="#fff"/>
+									</View>
+									<Text style={iconButtonStyles.buttonText}>Refresh Route</Text>
+								</TouchableOpacity>
+							</>
 						) :
 						!startTrip ? (
 							<TouchableOpacity style={iconButtonStyles.button} onPress={handleStartTrip}>

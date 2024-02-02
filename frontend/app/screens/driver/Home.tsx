@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import MapView, {PROVIDER_DEFAULT, Region, Marker} from "react-native-maps";
+import MapView, {PROVIDER_DEFAULT, Region, Marker, Polyline} from "react-native-maps";
 import { StyleSheet, View, Text, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -7,13 +7,11 @@ import {COLORS} from '../../../constants/theme'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import LocationService from '../../../services/LocationService';
 import CardComponent from '../../../components/CardComponent';
-import MapViewDirections from 'react-native-maps-directions';
 import TripService from '../../../services/TripService';
 
 
 export default function HomePage() {
 
-    const Google_API_KEY = '';
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -21,26 +19,65 @@ export default function HomePage() {
     const [currRegion, setCurrentRegion] = useState<Region | null>(null);
     const [destination, setDestination] = useState<any | null>(null); //destination to be matched with driver
     const [passenger, setPassenger] = useState<any | null>(null); //passenger to be matched with driver
+    const [routeCoordinates, setRouteCoordinates] = useState<Array<any>>([]);
+	const [passengerCoordinates, setPassengerCoordinates] = useState<Array<any>>([]);
     const [isOnTrip, setIsOnTrip] = useState<boolean>(false);
     const [passengers, setPassengers] = useState<any[]>([]);
     const mapRef = React.useRef<MapView>(null);
     const scrollRef = React.useRef<ScrollView>(null);
     const locationRef = useRef<Location.LocationObject | null>(location);
+    const passengerCoordinatesRef = useRef<Array<any>>(passengerCoordinates);
+    const routeCoordinatesRef = useRef<Array<any>>(routeCoordinates);
     //const { accessToken } = useSession()
     
+    // get router
+    const getRouteCoordinates = (origin: any, destination: any) => {
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?access_token=pk.eyJ1IjoiMHg0bnMiLCJhIjoiY2xvNjNjYXI0MDFwdTJsbXN4Y3NrcHgxOCJ9.FD6viYFpWMcdE8FJkrqUZw&geometries=geojson`;
+        console.log('Route url: ', url);
+        return fetch(url)
+            .then((res) => res.json())
+    }
     // get distance between two points using google maps api
     const getDistance = async (origin: any, destinations: any) => {
         try {
-            const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${origin.latitude},${origin.longitude}&destinations=${destinations}&key=${Google_API_KEY}`;
+            const apiUrl = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${origin.longitude},${origin.latitude};${destinations}?access_token=pk.eyJ1IjoiMHg0bnMiLCJhIjoiY2xvNjNjYXI0MDFwdTJsbXN4Y3NrcHgxOCJ9.FD6viYFpWMcdE8FJkrqUZw&annotations=distance&sources=0`;
             console.log(`apiUrl: ${apiUrl}`);
             let response = await fetch(apiUrl);
             let json = await response.json();
-            console.log(`elements: ${json.rows[0].elements}`);
-            return json.rows[0].elements;
+            console.log(`response json : ${json.distances[0].length}`);
+            if(json.distances[0].length == 0 && (json.code as string).toUpperCase() !== 'OK')
+                return [];
+            (json.distances[0] as any[]).shift();
+            return json.distances[0].map((distance: number) => (distance / 1000).toFixed(2));
         } catch (error) {
             console.error(error);
         }
     };
+    const handleRefreshRoutes = () => {
+        getRouteCoordinates(location?.coords, passenger?.location)
+        .then((res) => {
+            console.log('Passenger Route: ', res);
+            passengerCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
+                return {
+                    latitude: coordinate[1],
+                    longitude: coordinate[0]
+                }
+            });
+            setPassengerCoordinates(passengerCoordinatesRef.current);
+        });
+
+        getRouteCoordinates(passenger?.location, destination)
+        .then((res) => {
+            console.log('Route: ', res);
+            routeCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
+                return {
+                    latitude: coordinate[1],
+                    longitude: coordinate[0]
+                }
+            });
+            setRouteCoordinates(routeCoordinatesRef.current);
+        });
+    }
 
     const getMarkerColorByDistance = (distance: number) => {
         if (distance < 1) {
@@ -91,15 +128,8 @@ export default function HomePage() {
                         return [];
                     
                     const distances = await getDistance(localLocation?.coords, trips.reduce((acc: string, trip: any) => {
-                        return acc + '|' + trip.departureLatitude + ',' + trip.departureLongitude;
-                    }, '').substring(1))
-                    .then((elements) => {
-                        return elements.map((element: any) => {
-                            if(element.status == 'OK')
-                                return element.distance.text;
-                            return 'N/A';
-                        });
-                    });
+                        return acc + ';' + trip.departureLongitude + ',' + trip.departureLatitude;
+                    }, '').substring(1));
                     console.log('distances: ', distances);
                     return trips.map((trip: any, index: number) => {
                         return {
@@ -109,7 +139,7 @@ export default function HomePage() {
                                 latitude: trip.departureLatitude,
                                 longitude: trip.departureLongitude,
                             },
-                            distance: distances[index],
+                            distance: `${distances[index]} Km`,
                             color: getMarkerColorByDistance(parseFloat(distances[index]))
                         }
                     });
@@ -160,15 +190,52 @@ export default function HomePage() {
                             longitude: userLocation.longitude,
                         },
                     });
+
+                    if(passengerCoordinatesRef.current.length == 0){
+                        getRouteCoordinates(location?.coords, userLocation)
+                        .then((res) => {
+                            console.log('Passenger Route: ', res);
+                            passengerCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
+                                return {
+                                    latitude: coordinate[1],
+                                    longitude: coordinate[0]
+                                }
+                            });
+                            setPassengerCoordinates(passengerCoordinatesRef.current);
+                        });
+                    }
+                    if(routeCoordinatesRef.current.length == 0){
+                        getRouteCoordinates(userLocation, {
+                            latitude: trip.destinationLatitude,
+                            longitude: trip.destinationLongitude,
+                        })
+                        .then((res) => {
+                            console.log('Route: ', res);
+                            routeCoordinatesRef.current = res.routes[0].geometry.coordinates.map((coordinate: any) => {
+                                return {
+                                    latitude: coordinate[1],
+                                    longitude: coordinate[0]
+                                }
+                            });
+                            setRouteCoordinates(routeCoordinatesRef.current);
+                        });
+                    }
+
                     setLoading(false);
                     setIsOnTrip(true);
                 }
             })
             .catch((error) => {
-                console.error(error);
+                console.log('Trip in progress error: ', error);
+                clearInterval(interval);
                 setLoading(false);
                 setIsOnTrip(false);
-                clearInterval(interval);
+                setPassengerCoordinates([]);
+                passengerCoordinatesRef.current = [];
+                setRouteCoordinates([]);
+                routeCoordinatesRef.current = [];
+                setPassenger(null);
+                setDestination(null);
             });
         }, 8000);
     }
@@ -233,39 +300,38 @@ export default function HomePage() {
                     ))
                 }
 
-{
+                {
                 isOnTrip && (
                     <>
-                    <MapViewDirections
-                        origin={location?.coords}
-                        destination={destination}
-                        apikey={Google_API_KEY}
-                        strokeWidth={3}
-                        strokeColor="hotpink"
-                        optimizeWaypoints={true}
-                        onStart={(params) => {
-                            console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
-                        }}
-                        onError={(errorMessage) => {
-                            console.log('GOT AN ERROR');
-                        }}
+
+                    <Polyline
+                        coordinates={routeCoordinates}
+                        strokeColor="#000"
+                        strokeColors={[
+                                '#7F0000',
+                                '#00000000',
+                                '#B24112',
+                                '#E5845C',
+                                '#238C23',
+                                '#7F0000'
+                            ]}
+                        strokeWidth={6}
                     />
-                
-                    <MapViewDirections
-                        origin={location?.coords}
-                        destination={passenger.location}
-                        apikey={Google_API_KEY}
-                        strokeWidth={3}
-                        strokeColor="hotpink"
-                        optimizeWaypoints={true}
-                        onStart={(params) => {
-                            console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
-                        }}
-                        onError={(errorMessage) => {
-                            console.log('GOT AN ERROR');
-                        }}
+
+                    <Polyline
+                        coordinates={passengerCoordinates}
+                        strokeColor="#000"
+                        strokeColors={[
+                                '#7F0000',
+                                '#00000000',
+                                '#B24112',
+                                '#E5845C',
+                                '#238C23',
+                                '#7F0000'
+                            ]}
+                        strokeWidth={6}
                     />
-                
+				
                     <Marker
                         coordinate={passenger.location}
                         title={passenger.name}
@@ -353,6 +419,17 @@ export default function HomePage() {
             </TouchableOpacity>
         </View>
         </>
+        )}
+
+        {isOnTrip && (
+            <View style={iconButtonStyles.container}>
+                <TouchableOpacity style={iconButtonStyles.button} onPress={handleRefreshRoutes}>
+                    <View style={iconButtonStyles.iconContainer}>
+                        <Icon name="refresh" size={20} color="#fff"/>
+                    </View>
+                    <Text style={iconButtonStyles.buttonText}>Refresh Route</Text>
+                </TouchableOpacity>
+            </View>
         )}
 
         </View>

@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 
 export default function LoginForm() {
     const [click, setClick] = useState(false);
-    const [username, setUsername] = useState("test@test.com");
+    const [username, setUsername] = useState("driver@gmail.com");
     const [password, setPassword] = useState("12345678");
     const { signIn } = useSession();
     const router = useRouter();
