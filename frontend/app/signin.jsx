@@ -2,30 +2,25 @@ import React, {useState} from 'react'
 import {Alert, Pressable, SafeAreaView, StyleSheet, Switch, Text, View} from 'react-native'
 
 import {COLORS} from '../constants/theme'
-import {useRouter} from "expo-router";
 import InputComponent from '../components/InputComponent';
 import SubmitButtonComponent from '../components/SubmitButtonComponent';
-import AuthService from "../services/AuthService";
+import {useSession} from "../auth/AuthContext";
+import { useRouter } from 'expo-router';
 
 export default function LoginForm() {
     const [click, setClick] = useState(false);
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const router = useRouter()
+    const [username, setUsername] = useState("driver@gmail.com");
+    const [password, setPassword] = useState("12345678");
+    const { signIn } = useSession();
+    const router = useRouter();
+
 
     const handleLogin = () => {
         const user = {
             'username': username,
             'password': password,
         };
-        AuthService.login(user)
-        .then(() => {
-            router.push("/home")
-        })
-        .catch((error) => {
-            console.log(error);
-            Alert.alert("Login Failed!");
-        });
+        signIn(user)
     }
 
 

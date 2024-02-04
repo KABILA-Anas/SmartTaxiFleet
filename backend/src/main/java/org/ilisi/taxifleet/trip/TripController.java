@@ -7,6 +7,8 @@ import org.ilisi.taxifleet.model.User;
 import org.ilisi.taxifleet.trip.dto.TripInProgressDto;
 import org.ilisi.taxifleet.trip.dto.TripRequestDto;
 import org.ilisi.taxifleet.trip.model.Trip;
+import org.ilisi.taxifleet.trip.model.TripStatus;
+import org.ilisi.taxifleet.userlocation.UserLocation;
 import org.ilisi.taxifleet.userlocation.UserLocationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,15 +37,21 @@ public class TripController {
     }
 
     @GetMapping("/trips/in-progress")
-    @PreAuthorize("hasRole('ROLE_PASSENGER')")
     public ResponseEntity<TripInProgressDto> getPassengerTripsInProgress(Principal principal) {
-        Passenger passenger = ((Passenger) ((Authentication) principal).getPrincipal());
-        var trip = tripService.getPassengerTripInProgress(passenger);
-        var driverLocation = userLocationService.getUserLocation(trip.getDriver());
+        User user = ((User) ((Authentication) principal).getPrincipal());
+        var trip = tripService.getUserTripInProgress(user);
+        UserLocation userLocation = null;
+
+        if(trip.getStatus().equals(TripStatus.ACCEPTED)) {
+            userLocation = user instanceof Passenger ?
+                    userLocationService.getUserLocation(trip.getDriver()) :
+                    userLocationService.getUserLocation(trip.getPassenger());
+        }
+
         return ResponseEntity.ok(TripInProgressDto
                 .builder()
                 .trip(trip)
-                .userLocation(driverLocation)
+                .userLocation(userLocation)
                 .build());
     }
 

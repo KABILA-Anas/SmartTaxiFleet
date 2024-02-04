@@ -14,6 +14,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t FROM Trip t WHERE t.passenger.id = ?1 and t.status = 'PENDING' or t.status = 'ACCEPTED'")
     List<Trip> findByPassengerTipsInProgress(Long passengerId);
 
+    @Query("SELECT t FROM Trip t WHERE t.driver.id = ?1 and t.status = 'PENDING' or t.status = 'ACCEPTED'")
+    List<Trip> findByDriverTipsInProgress(Long driverId);
+
+
     @Query("""
             SELECT t FROM Trip t
                 WHERE t.status = 'PENDING' and t.driver is null
@@ -29,8 +33,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             """)
     Optional<Trip> findByClosestPassengerTip(long driverId);
 
-    @Query("SELECT t FROM Trip t WHERE t.driver.id = ?1 and t.status = 'PENDING' or t.status = 'ACCEPTED'")
-    List<Trip> findByDriverTipsInProgress(Long driverId);
 
     @Query("""
                 SELECT t FROM Trip t

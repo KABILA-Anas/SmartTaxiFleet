@@ -1,8 +1,11 @@
-import HomePage from "./screens/passenger/Home";
+import LoginForm from "./signin";
+import {LogBox} from "react-native";
+
+LogBox.ignoreAllLogs(true);
 
 export default function App() {
   return (
-    <HomePage />
+    <LoginForm />
   );
 }
 

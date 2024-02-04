@@ -1,26 +1,23 @@
 import {API_BASE_URL} from "../constants/api";
+import {httpApi} from "./httpApi";
 
 export default class LocationService {
     static sendLocation(location) {
-        fetch(`${API_BASE_URL}/userLocation`, {
-            method: 'POST',
-            body: JSON.stringify(location),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("sendLocation", data);
-            })
-            .catch(err => {
-                console.error("sendLocation_ERROR :", err);
-            });
+        //console.log("sendLocation", location);
+
+        return httpApi.post('/userLocations', location).then(res => {
+            //console.log("sendLocation", res);
+            return res.data;
+        });
     }
 
-    static getLocation(userId) {
-        return fetch(`${API_BASE_URL}/userLocation/${userId}`, {
+    static getLocation(userId, token) {
+        return fetch(`${API_BASE_URL}/userLocations/${userId}`, {
             method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
         })
             .then(res => res.json())
             .then(data => {
